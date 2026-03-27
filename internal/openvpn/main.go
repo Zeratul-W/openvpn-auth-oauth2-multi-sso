@@ -33,8 +33,10 @@ func New(logger *slog.Logger, conf config.Config) *Client {
 
 		connMu:    sync.Mutex{},
 		commandMu: sync.RWMutex{},
+		claimsMu:  sync.RWMutex{},
 
 		commandsBuffer: bytes.Buffer{},
+		clientClaims:   make(map[string]map[string]any),
 
 		clientsCh:         make(chan connection.Client, 10),
 		commandResponseCh: make(chan string),
@@ -43,6 +45,18 @@ func New(logger *slog.Logger, conf config.Config) *Client {
 	}
 
 	client.commandsBuffer.Grow(512)
+
+	// Initialize IPSet manager
+	if conf.OpenVPN.IPSet.Enabled {
+		ipsetManager, err := NewIPSetManager(&conf, logger)
+		if err != nil {
+			logger.LogAttrs(context.Background(), slog.LevelError, "failed to initialize ipset manager",
+				slog.Any("error", err),
+			)
+		} else {
+			client.ipsetManager = ipsetManager
+		}
+	}
 
 	return client
 }

@@ -168,6 +168,36 @@ func (c *Config) flagSetOpenVPN(flagSet *flag.FlagSet) {
 		"If non-empty, the value of the token claim is used to lookup the configuration file in the CCD directory. If empty, the common name is used.",
 	)
 	flagSet.BoolVar(
+		&c.OpenVPN.ClaimsFile.Enabled,
+		"openvpn.claims-file.enabled",
+		lookupEnvOrDefault("openvpn.claims-file.enabled", c.OpenVPN.ClaimsFile.Enabled),
+		"If true, openvpn-auth-oauth2 will write OAuth2 claims to JSON files for server-side scripts to use.",
+	)
+	flagSet.StringVar(
+		&c.OpenVPN.ClaimsFile.Path,
+		"openvpn.claims-file.path",
+		lookupEnvOrDefault("openvpn.claims-file.path", c.OpenVPN.ClaimsFile.Path),
+		"Directory path where OAuth2 claims JSON files will be written. Files are named by client common_name.",
+	)
+	flagSet.BoolVar(
+		&c.OpenVPN.IPSet.Enabled,
+		"openvpn.ipset.enabled",
+		lookupEnvOrDefault("openvpn.ipset.enabled", c.OpenVPN.IPSet.Enabled),
+		"If true, openvpn-auth-oauth2 will manage ipset based on OAuth2 claims.",
+	)
+	flagSet.StringVar(
+		&c.OpenVPN.IPSet.ConfigPath,
+		"openvpn.ipset.config-path",
+		lookupEnvOrDefault("openvpn.ipset.config-path", c.OpenVPN.IPSet.ConfigPath),
+		"Path to the ipset rules YAML configuration file.",
+	)
+	flagSet.StringVar(
+		&c.OpenVPN.IPSet.ClaimField,
+		"openvpn.ipset.claim-field",
+		lookupEnvOrDefault("openvpn.ipset.claim-field", c.OpenVPN.IPSet.ClaimField),
+		"OAuth2 claim field to use for matching ipset rules (e.g., 'email', 'preferred_username', 'sub').",
+	)
+	flagSet.BoolVar(
 		&c.OpenVPN.ClientConfig.UserSelector.Enabled,
 		"openvpn.client-config.user-selector.enabled",
 		lookupEnvOrDefault("openvpn.client-config.user-selector.enabled", c.OpenVPN.ClientConfig.UserSelector.Enabled),

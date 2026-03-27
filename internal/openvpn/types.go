@@ -20,6 +20,9 @@ const (
 
 type Client struct {
 	oauth2               oauth2Client
+	ipsetManager         *IPSetManager
+	clientClaims         map[string]map[string]any // map[common_name]claims
+	claimsMu             sync.RWMutex
 	conn                 net.Conn
 	commandsCh           chan string
 	logger               *slog.Logger

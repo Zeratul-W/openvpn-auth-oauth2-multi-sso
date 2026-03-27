@@ -56,6 +56,17 @@ var Defaults = Config{
 				StaticValues: make(types.StringSlice, 0),
 			},
 		},
+		ClaimsFile: OpenVPNClaimsFile{
+			Enabled: false,
+			Path:    "/tmp/openvpn-claims",
+		},
+		IPSet: OpenVPNIPSet{
+			Enabled:    false,
+			ConfigPath: "/etc/openvpn-auth-oauth2/ipset-rules.yaml",
+			ClaimField: "email",
+			GroupIDMap: make(map[string]string),
+			Rules:      make([]OpenVPNIPSetRule, 0),
+		},
 		CommonName: OpenVPNCommonName{
 			EnvironmentVariableName: "common_name",
 			Mode:                    CommonNameModePlain,

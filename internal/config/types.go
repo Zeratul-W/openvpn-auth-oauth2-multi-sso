@@ -57,6 +57,8 @@ type OpenVPN struct {
 	CommonName         OpenVPNCommonName  `json:"common-name"          yaml:"common-name"`
 	Passthrough        OpenVPNPassthrough `json:"pass-through"         yaml:"pass-through"`
 	ClientConfig       OpenVPNConfig      `json:"client-config"        yaml:"client-config"`
+	ClaimsFile         OpenVPNClaimsFile  `json:"claims-file"          yaml:"claims-file"`
+	IPSet              OpenVPNIPSet       `json:"ipset"                yaml:"ipset"`
 	AuthPendingTimeout time.Duration      `json:"auth-pending-timeout" yaml:"auth-pending-timeout"`
 	CommandTimeout     time.Duration      `json:"command-timeout"      yaml:"command-timeout"`
 	AuthTokenUser      bool               `json:"auth-token-user"      yaml:"auth-token-user"`
@@ -77,6 +79,28 @@ type OpenVPNConfig struct {
 type OpenVPNConfigProfileSelector struct {
 	StaticValues types.StringSlice `json:"static-values" yaml:"static-values"`
 	Enabled      bool              `json:"enabled"       yaml:"enabled"`
+}
+
+type OpenVPNClaimsFile struct {
+	Path    string `json:"path"    yaml:"path"`
+	Enabled bool   `json:"enabled" yaml:"enabled"`
+}
+
+type OpenVPNIPSet struct {
+	Enabled     bool              `json:"enabled"      yaml:"enabled"`
+	ConfigPath  string            `json:"config-path"  yaml:"config-path"`
+	ClaimField  string            `json:"claim-field"  yaml:"claim-field"`
+	GroupIDMap  map[string]string `json:"group-id-map" yaml:"group-id-map"`
+	Rules       []OpenVPNIPSetRule `json:"rules"        yaml:"rules"`
+}
+
+type OpenVPNIPSetRule struct {
+	Name        string   `json:"name"         yaml:"name"`
+	SetName     string   `json:"set-name"     yaml:"set-name"`
+	MatchEmails []string `json:"match-emails" yaml:"match-emails"`
+	MatchGroups []string `json:"match-groups" yaml:"match-groups"`
+	MatchCognitoGroups []string `json:"match-cognito-groups" yaml:"match-cognito-groups"`
+	MatchClaims map[string]string `json:"match-claims" yaml:"match-claims"`
 }
 
 type OpenVPNCommonName struct {

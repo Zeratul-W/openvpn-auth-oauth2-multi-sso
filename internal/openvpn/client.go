@@ -58,7 +58,7 @@ func (c *Client) handleClientAuthentication(ctx context.Context, logger *slog.Lo
 	// Check if the client is allowed to bypass authentication. If so, accept the client.
 	if c.checkAuthBypass(client) {
 		logger.LogAttrs(ctx, slog.LevelInfo, "client bypass authentication")
-		c.AcceptClient(ctx, logger, state.ClientIdentifier{CID: client.CID, KID: client.KID}, true, client.CommonName, "")
+		c.AcceptClient(ctx, logger, state.ClientIdentifier{CID: client.CID, KID: client.KID}, true, client.CommonName, "", nil)
 
 		return
 	}
@@ -83,7 +83,7 @@ func (c *Client) handleClientAuthentication(ctx context.Context, logger *slog.Lo
 
 		return
 	} else if ok {
-		c.AcceptClient(ctx, logger, state.ClientIdentifier{CID: client.CID, KID: client.KID}, true, client.CommonName, "")
+		c.AcceptClient(ctx, logger, state.ClientIdentifier{CID: client.CID, KID: client.KID}, true, client.CommonName, "", nil)
 
 		return
 	}
@@ -198,10 +198,52 @@ func (c *Client) clientEstablished(ctx context.Context, logger *slog.Logger, cli
 	logger.LogAttrs(ctx, slog.LevelInfo, "client established",
 		slog.String("vpn_ip", client.VPNAddress),
 	)
+
+	// Add client to ipset if enabled
+	if c.conf.OpenVPN.IPSet.Enabled && c.ipsetManager != nil {
+		c.claimsMu.RLock()
+		claims, hasClaims := c.clientClaims[client.CommonName]
+		c.claimsMu.RUnlock()
+
+		if hasClaims {
+			clientID := state.ClientIdentifier{
+				CID:        client.CID,
+				KID:        client.KID,
+				CommonName: client.CommonName,
+			}
+
+			if err := c.ipsetManager.AddClientToIPSet(ctx, clientID, client.VPNAddress, claims); err != nil {
+				logger.LogAttrs(ctx, slog.LevelError, "failed to add client to ipset",
+					slog.Any("error", err),
+				)
+			}
+		}
+	}
 }
 
 func (c *Client) clientDisconnect(ctx context.Context, logger *slog.Logger, client connection.Client) {
 	logger.LogAttrs(ctx, slog.LevelInfo, "client disconnected")
+
+	// Remove client from ipset if enabled
+	if c.conf.OpenVPN.IPSet.Enabled && c.ipsetManager != nil && client.VPNAddress != "" {
+		if err := c.ipsetManager.RemoveClientFromIPSet(ctx, client.VPNAddress); err != nil {
+			logger.LogAttrs(ctx, slog.LevelError, "failed to remove client from ipset",
+				slog.Any("error", err),
+			)
+		}
+	}
+
+	// Clean up stored claims
+	if c.conf.OpenVPN.IPSet.Enabled {
+		c.claimsMu.Lock()
+		delete(c.clientClaims, client.CommonName)
+		c.claimsMu.Unlock()
+	}
+
+	// Clean up claims file if enabled
+	if c.conf.OpenVPN.ClaimsFile.Enabled {
+		c.deleteClaimsFile(ctx, logger, client.CommonName)
+	}
 
 	c.oauth2.ClientDisconnect(ctx, logger, client)
 }
